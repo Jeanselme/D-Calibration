@@ -16,7 +16,7 @@ def dcalibration(proba_t, e, nbins = 20):
     """
     uncensored = proba_t[e != 0] # Only observed event
     observed, _ = np.histogram(uncensored, bins = nbins, range = (0, 1))
-    return np.sum(np.power(observed / len(uncensored) - 1. / nbins, 2))
+    return np.sum(np.power(observed / len(proba_t) - 1. / nbins, 2))
 
 def predict_t(survival, times):
     """
