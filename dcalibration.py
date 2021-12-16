@@ -20,11 +20,11 @@ def dcalibration(proba_t, e, nbins = 20):
     count, bins = np.histogram(proba_t[e != 0], bins = nbins, range = (0, 1))
 
     # Weighting of each cell takes into account censoring
-    assigned = np.digitize(proba_t[e == 0], bins = bins)
-    weights = [(1 - bins[i] / proba_t[e == 0][assigned == i]).sum() for i in np.arange(nbins)]
+    assigned = np.digitize(proba_t[e == 0], bins = bins) - 1
+    weights = [(1 - bins[i] / proba_t[e == 0][assigned == i]).sum() if (assigned == i).sum() > 0 else 0 for i in np.arange(nbins)]
 
     # Impact on all previous cell
-    blur = [(1 / (nbins * proba_t[e == 0][assigned == i])).sum() for i in np.arange(nbins)]
+    blur = [(1 / (nbins * proba_t[e == 0][assigned == i])).sum() if (assigned == i).sum() > 0 else 0 for i in np.arange(nbins)]
     blur = np.cumsum(np.insert(blur[::-1], 0, 0))[::-1][:-1]
 
     bins = count + weights + blur
