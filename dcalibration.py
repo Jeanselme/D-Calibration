@@ -23,9 +23,9 @@ def dcalibration(proba_t, e, nbins = 20):
     assigned = np.digitize(proba_t[e == 0], bins = bins) - 1
     weights = [(1 - bins[i] / proba_t[e == 0][assigned == i]).sum() if (assigned == i).sum() > 0 else 0 for i in np.arange(nbins)]
 
-    # Impact on all previous cell
+    # Impact on all previous cell of censored 
     blur = [(1 / (nbins * proba_t[e == 0][assigned == i])).sum() if (assigned == i).sum() > 0 else 0 for i in np.arange(nbins)]
-    blur = np.cumsum(np.insert(blur[::-1], 0, 0))[::-1][:-1]
+    blur = np.insert(np.cumsum(blur[::-1]), 0, 0)[::-1][1:] 
 
     bins = count + weights + blur
     return np.sum(np.power(bins / len(proba_t) - 1. / nbins, 2))
