@@ -6,6 +6,8 @@ def dcalibration(proba_t, e, nbins = 20):
     Compute the D calibration of the model
     (The lower the better)
 
+    Formula 49 in https://arxiv.org/pdf/1811.11347.pdf
+
     Args:
         proba_t (np.array n): Predicted survival for each patient at event time (ie S(t_i |x_i))
         e (np.array n): Indicator of observed event 
@@ -14,9 +16,19 @@ def dcalibration(proba_t, e, nbins = 20):
     Returns:
         float: Mean Squared Error between expected percentage of patient in the bin and observed percentage
     """
-    uncensored = proba_t[e != 0] # Only observed event
-    observed, _ = np.histogram(uncensored, bins = nbins, range = (0, 1))
-    return np.sum(np.power(observed / len(proba_t) - 1. / nbins, 2))
+    # Censored computation
+    count, bins = np.histogram(proba_t[e != 0], bins = nbins, range = (0, 1))
+
+    # Weighting of each cell takes into account censoring
+    assigned = np.digitize(proba_t[e == 0], bins = bins)
+    weights = [(1 - bins[i] / proba_t[e == 0][assigned == i]).sum() for i in np.arange(nbins)]
+
+    # Impact on all previous cell
+    blur = [(1 / (nbins * proba_t[e == 0][assigned == i])).sum() for i in np.arange(nbins)]
+    blur = np.cumsum(np.insert(blur[::-1], 0, 0))[::-1][:-1]
+
+    bins = count + weights + blur
+    return np.sum(np.power(bins / len(proba_t) - 1. / nbins, 2))
 
 def predict_t(survival, times):
     """
